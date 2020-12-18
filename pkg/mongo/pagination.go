@@ -4,11 +4,13 @@ import (
 	"errors"
 )
 
+// Pagination page for query
 type Pagination struct {
-	Page int64 `json:"page"`
+	Page     int64 `json:"page"`
 	PageSize int64 `json:"pageSize"`
 }
 
+// ValidatePagination validate pagination
 func ValidatePagination(pagination *Pagination) (*Pagination, error) {
 	if pagination == nil {
 		return nil, errors.New("missing pagination")

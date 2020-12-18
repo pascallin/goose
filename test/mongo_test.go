@@ -2,7 +2,6 @@ package test
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/joho/godotenv"
@@ -16,7 +15,6 @@ func TestConnectUsingEnv(t *testing.T) {
 		t.Error(err)
 	}
 	db, err := mongo.NewMongoDatabase(&mongo.DatabaseOptions{
-		DatabaseName: os.Getenv("MONGODB_DATABASE"),
 		UsingEnv: true,
 	})
 	if err != nil {
@@ -37,7 +35,7 @@ func TestConnectUsingURL(t *testing.T) {
 
 	db, err := mongo.NewMongoDatabase(&mongo.DatabaseOptions{
 		DatabaseName: "test",
-		URL: connectionURI,
+		URL:          connectionURI,
 	})
 	if err != nil {
 		t.Fatal(err)
