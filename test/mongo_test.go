@@ -22,7 +22,7 @@ func TestConnectUsingEnv(t *testing.T) {
 	}
 	defer db.Close()
 
-	model := mongo.NewORM("test")
+	model := mongo.NewModel("test")
 
 	id, err := model.InsertOne(bson.M{"name": "test"})
 
@@ -42,7 +42,7 @@ func TestConnectUsingURL(t *testing.T) {
 	}
 	defer db.Close()
 
-	model := mongo.NewORM("test")
+	model := mongo.NewModel("test")
 
 	id, err := model.InsertOne(bson.M{"name": "test 1"})
 

@@ -12,8 +12,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// ORM ORM class
-type ORM struct {
+// Model Model class
+type Model struct {
 	collection *mongo.Collection
 }
 
@@ -27,16 +27,16 @@ func getCollection(collectionName string) *mongo.Collection {
 	return DB.Collection(collectionName)
 }
 
-// NewORM new a orm class
-func NewORM(collectionName string) *ORM {
+// NewModel new a Model class
+func NewModel(collectionName string) *Model {
 	collection := getCollection(collectionName)
-	return &ORM{
+	return &Model{
 		collection: collection,
 	}
 }
 
 // FindAndCount find data and number count
-func (orm *ORM) FindAndCount(filter bson.M, pagination *Pagination) (*FindAndCountResult, error) {
+func (Model *Model) FindAndCount(filter bson.M, pagination *Pagination) (*FindAndCountResult, error) {
 	var result []bson.Raw
 	pagination, err := ValidatePagination(pagination)
 	if err != nil {
@@ -50,7 +50,7 @@ func (orm *ORM) FindAndCount(filter bson.M, pagination *Pagination) (*FindAndCou
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	cur, err := orm.collection.Find(ctx, filter, options)
+	cur, err := Model.collection.Find(ctx, filter, options)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (orm *ORM) FindAndCount(filter bson.M, pagination *Pagination) (*FindAndCou
 	if err := cur.Err(); err != nil {
 		log.Fatal(err)
 	}
-	total, err := orm.collection.CountDocuments(ctx, filter)
+	total, err := Model.collection.CountDocuments(ctx, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -72,8 +72,8 @@ func (orm *ORM) FindAndCount(filter bson.M, pagination *Pagination) (*FindAndCou
 }
 
 // InsertOne insert data into collection
-func (orm *ORM) InsertOne(T interface{}) (string, error) {
-	insertResult, err := orm.collection.InsertOne(context.Background(), T)
+func (Model *Model) InsertOne(T interface{}) (string, error) {
+	insertResult, err := Model.collection.InsertOne(context.Background(), T)
 	if err != nil {
 		return primitive.NilObjectID.String(), err
 	}
@@ -81,8 +81,8 @@ func (orm *ORM) InsertOne(T interface{}) (string, error) {
 }
 
 // FindOne find data by filter
-func (orm *ORM) FindOne(filter bson.M) (*mongo.SingleResult, error) {
-	singleResult := orm.collection.
+func (Model *Model) FindOne(filter bson.M) (*mongo.SingleResult, error) {
+	singleResult := Model.collection.
 		FindOne(context.Background(), filter)
 	if singleResult.Err() != nil {
 		return nil, singleResult.Err()
@@ -91,12 +91,12 @@ func (orm *ORM) FindOne(filter bson.M) (*mongo.SingleResult, error) {
 }
 
 // FindOneByID find data by _id
-func (orm *ORM) FindOneByID(id string) (*mongo.SingleResult, error) {
+func (Model *Model) FindOneByID(id string) (*mongo.SingleResult, error) {
 	mongoID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
 	}
-	singleResult := orm.collection.FindOne(context.Background(), bson.M{"_id": mongoID})
+	singleResult := Model.collection.FindOne(context.Background(), bson.M{"_id": mongoID})
 	if singleResult.Err() != nil {
 		return nil, singleResult.Err()
 	}
@@ -104,13 +104,13 @@ func (orm *ORM) FindOneByID(id string) (*mongo.SingleResult, error) {
 }
 
 // FindOneByIDAndUpdate find one and update by id
-func (orm *ORM) FindOneByIDAndUpdate(id string, updates bson.M) (*mongo.SingleResult, error) {
+func (Model *Model) FindOneByIDAndUpdate(id string, updates bson.M) (*mongo.SingleResult, error) {
 	after := options.After
 	mongoID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
 	}
-	singleResult := orm.collection.FindOneAndUpdate(
+	singleResult := Model.collection.FindOneAndUpdate(
 		context.Background(),
 		bson.M{"_id": mongoID},
 		bson.M{
@@ -126,9 +126,9 @@ func (orm *ORM) FindOneByIDAndUpdate(id string, updates bson.M) (*mongo.SingleRe
 }
 
 // FindOneAndUpdate find one and update by filter
-func (orm *ORM) FindOneAndUpdate(filter bson.M, updates bson.M) (*mongo.SingleResult, error) {
+func (Model *Model) FindOneAndUpdate(filter bson.M, updates bson.M) (*mongo.SingleResult, error) {
 	after := options.After
-	singleResult := orm.collection.FindOneAndUpdate(
+	singleResult := Model.collection.FindOneAndUpdate(
 		context.Background(),
 		filter,
 		bson.M{
@@ -144,40 +144,40 @@ func (orm *ORM) FindOneAndUpdate(filter bson.M, updates bson.M) (*mongo.SingleRe
 }
 
 // DeleteOne delete record by filter
-func (orm *ORM) DeleteOne(filter bson.M) (*mongo.DeleteResult, error) {
-	return orm.collection.DeleteOne(context.Background(), filter)
+func (Model *Model) DeleteOne(filter bson.M) (*mongo.DeleteResult, error) {
+	return Model.collection.DeleteOne(context.Background(), filter)
 }
 
 // DeleteOneByID delete record by id
-func (orm *ORM) DeleteOneByID(id string) (*mongo.DeleteResult, error) {
+func (Model *Model) DeleteOneByID(id string) (*mongo.DeleteResult, error) {
 	mongoID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
 	}
-	return orm.collection.DeleteOne(context.Background(), bson.M{"_id": mongoID})
+	return Model.collection.DeleteOne(context.Background(), bson.M{"_id": mongoID})
 }
 
 // BulkWrite insert batch records
-func (orm *ORM) BulkWrite(models []mongo.WriteModel) (*mongo.BulkWriteResult, error) {
-	return orm.collection.BulkWrite(context.Background(), models)
+func (Model *Model) BulkWrite(models []mongo.WriteModel) (*mongo.BulkWriteResult, error) {
+	return Model.collection.BulkWrite(context.Background(), models)
 }
 
 // UpdateMany update batch records
-func (orm *ORM) UpdateMany(filter bson.M, updates interface{}) (*mongo.UpdateResult, error) {
-	return orm.collection.UpdateMany(context.Background(), filter, updates)
+func (Model *Model) UpdateMany(filter bson.M, updates interface{}) (*mongo.UpdateResult, error) {
+	return Model.collection.UpdateMany(context.Background(), filter, updates)
 }
 
 // DeleteMany delete batch records
-func (orm *ORM) DeleteMany(filter bson.M) (*mongo.DeleteResult, error) {
-	return orm.collection.DeleteMany(context.Background(), filter)
+func (Model *Model) DeleteMany(filter bson.M) (*mongo.DeleteResult, error) {
+	return Model.collection.DeleteMany(context.Background(), filter)
 }
 
 // SoftDeleteOne soft delete single record
-func (orm *ORM) SoftDeleteOne(filter bson.M) (*mongo.UpdateResult, error) {
-	return orm.collection.UpdateOne(context.Background(), filter, bson.M{"deletedAt": time.Now()})
+func (Model *Model) SoftDeleteOne(filter bson.M) (*mongo.UpdateResult, error) {
+	return Model.collection.UpdateOne(context.Background(), filter, bson.M{"deletedAt": time.Now()})
 }
 
 // SoftDeleteMany soft delete batch record
-func (orm *ORM) SoftDeleteMany(filter bson.M) (*mongo.UpdateResult, error) {
-	return orm.collection.UpdateMany(context.Background(), filter, bson.M{"deletedAt": time.Now()})
+func (Model *Model) SoftDeleteMany(filter bson.M) (*mongo.UpdateResult, error) {
+	return Model.collection.UpdateMany(context.Background(), filter, bson.M{"deletedAt": time.Now()})
 }
