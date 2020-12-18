@@ -1,5 +1,8 @@
 # goose
-some mongodb and mysql database utils
+
+some database interface:
+
+- `/pkg/mongo`: inspired by Node.JS package `mongoose`
 
 ## test
 
