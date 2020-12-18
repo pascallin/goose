@@ -90,6 +90,19 @@ func (orm *ORM) FindOne(filter bson.M) (*mongo.SingleResult, error) {
 	return singleResult, nil
 }
 
+// FindOneByID find data by _id
+func (orm *ORM) FindOneByID(id string) (*mongo.SingleResult, error) {
+	mongoID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+	singleResult := orm.collection.FindOne(context.Background(), bson.M{"_id": mongoID})
+	if singleResult.Err() != nil {
+		return nil, singleResult.Err()
+	}
+	return singleResult, nil
+}
+
 // FindOneByIDAndUpdate find one and update by id
 func (orm *ORM) FindOneByIDAndUpdate(id string, updates bson.M) (*mongo.SingleResult, error) {
 	after := options.After
