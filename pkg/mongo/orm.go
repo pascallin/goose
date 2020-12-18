@@ -96,7 +96,9 @@ func (orm *ORM) FindOneByIDAndUpdate(id string, updates bson.M) (*mongo.SingleRe
 	singleResult := orm.collection.FindOneAndUpdate(
 		context.Background(),
 		bson.M{"_id": id},
-		updates,
+		bson.M{
+			"$set": updates,
+		},
 		&options.FindOneAndUpdateOptions{
 			ReturnDocument: &after,
 		})
@@ -112,7 +114,9 @@ func (orm *ORM) FindOneAndUpdate(filter bson.M, updates bson.M) (*mongo.SingleRe
 	singleResult := orm.collection.FindOneAndUpdate(
 		context.Background(),
 		filter,
-		updates,
+		bson.M{
+			"$set": updates,
+		},
 		&options.FindOneAndUpdateOptions{
 			ReturnDocument: &after,
 		})
