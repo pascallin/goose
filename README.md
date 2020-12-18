@@ -4,16 +4,19 @@ some database interface:
 
 - `/pkg/mongo`: more human known interface mongo package, inspired by Node.JS package `mongoose`
 
+## Development
+
 ## Docs
 
 ```shell
+git clone https://github.com/pascallin/goose.git
+
 go get -v  golang.org/x/tools/cmd/godoc
+
 godoc -http=:6060
 
 # visit http://localhost:6060/pkg/github.com/pascallin/goose/pkg/mongo/
 ```
-
-## Development
 
 ### Test
 
