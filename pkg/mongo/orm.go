@@ -93,9 +93,13 @@ func (orm *ORM) FindOne(filter bson.M) (*mongo.SingleResult, error) {
 // FindOneByIDAndUpdate find one and update by id
 func (orm *ORM) FindOneByIDAndUpdate(id string, updates bson.M) (*mongo.SingleResult, error) {
 	after := options.After
+	mongoID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
 	singleResult := orm.collection.FindOneAndUpdate(
 		context.Background(),
-		bson.M{"_id": id},
+		bson.M{"_id": mongoID},
 		bson.M{
 			"$set": updates,
 		},
@@ -133,7 +137,11 @@ func (orm *ORM) DeleteOne(filter bson.M) (*mongo.DeleteResult, error) {
 
 // DeleteOneByID delete record by id
 func (orm *ORM) DeleteOneByID(id string) (*mongo.DeleteResult, error) {
-	return orm.collection.DeleteOne(context.Background(), bson.M{"_id": id})
+	mongoID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+	return orm.collection.DeleteOne(context.Background(), bson.M{"_id": mongoID})
 }
 
 // BulkWrite insert batch records
@@ -153,10 +161,10 @@ func (orm *ORM) DeleteMany(filter bson.M) (*mongo.DeleteResult, error) {
 
 // SoftDeleteOne soft delete single record
 func (orm *ORM) SoftDeleteOne(filter bson.M) (*mongo.UpdateResult, error) {
-	return orm.collection.UpdateOne(context.Background(), filter, bson.M{"deletedAt": 1})
+	return orm.collection.UpdateOne(context.Background(), filter, bson.M{"deletedAt": time.Now()})
 }
 
 // SoftDeleteMany soft delete batch record
 func (orm *ORM) SoftDeleteMany(filter bson.M) (*mongo.UpdateResult, error) {
-	return orm.collection.UpdateMany(context.Background(), filter, bson.M{"deletedAt": 1})
+	return orm.collection.UpdateMany(context.Background(), filter, bson.M{"deletedAt": time.Now()})
 }
