@@ -2,17 +2,28 @@
 
 some database interface:
 
-- `/pkg/mongo`: inspired by Node.JS package `mongoose`
+- `/pkg/mongo`: more human known interface mongo package, inspired by Node.JS package `mongoose`
 
-## test
+## Docs
+
+```shell
+go get -v  golang.org/x/tools/cmd/godoc
+godoc -http=:6060
+
+# visit http://localhost:6060/pkg/github.com/pascallin/goose/pkg/mongo/
+```
+
+## Development
+
+### Test
 
 ```shell script
 go test -v ./test
 ```
 
-## strict rules
+## Strict rules
 
-### pagination
+### Pagination
 
 using pagination struct as below
 
@@ -25,13 +36,13 @@ type Pagination struct {
 
 you can validate pagination by using `ValidatePagination` method
 
-### soft delete
+### Soft delete
 
 using `deletedAt` as soft delete specific field.
 
 then you can using `SoftDeleteOne` and `SoftDeleteMany` to soft delete records.
 
-### query list data
+### Query list data
 
 the result of `FindAndCount` will be like as below:
 
