@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/joho/godotenv"
-	"github.com/pascallin/goose/pkg/mongo"
-	"go.mongodb.org/mongo-driver/bson"
+
+	"github.com/pascallin/goose"
 )
 
 func TestConnectUsingEnv(t *testing.T) {
@@ -14,7 +14,7 @@ func TestConnectUsingEnv(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	db, err := mongo.NewMongoDatabase(&mongo.DatabaseOptions{
+	db, err := goose.NewMongoDatabase(&goose.DatabaseOptions{
 		UsingEnv: true,
 	})
 	if err != nil {
@@ -22,18 +22,18 @@ func TestConnectUsingEnv(t *testing.T) {
 	}
 	defer db.Close()
 
-	model := mongo.NewModel("test")
+	// model := goose.NewModel("test")
 
-	id, err := model.InsertOne(bson.M{"name": "test"})
+	// id, err := model.InsertOne(bson.M{"name": "test"})
 
-	t.Log(id)
+	// t.Log(id)
 }
 
 func TestConnectUsingURL(t *testing.T) {
 	mongoConnStringTemplate := "mongodb://%s:%s@%s:%s"
 	connectionURI := fmt.Sprintf(mongoConnStringTemplate, "root", "example", "localhost", "27017")
 
-	db, err := mongo.NewMongoDatabase(&mongo.DatabaseOptions{
+	db, err := goose.NewMongoDatabase(&goose.DatabaseOptions{
 		DatabaseName: "test",
 		URL:          connectionURI,
 	})
@@ -42,9 +42,9 @@ func TestConnectUsingURL(t *testing.T) {
 	}
 	defer db.Close()
 
-	model := mongo.NewModel("test")
+	// model := goose.NewModel("test")
 
-	id, err := model.InsertOne(bson.M{"name": "test 1"})
+	// id, err := model.InsertOne(bson.M{"name": "test 1"})
 
-	t.Log(id)
+	// t.Log(id)
 }

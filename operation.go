@@ -1,21 +1,15 @@
-package mongo
+package goose
 
 import (
 	"context"
 	"log"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
-
-// Model Model class
-type Model struct {
-	collection *mongo.Collection
-}
 
 // FindAndCountResult data struct for FindAndCount
 type FindAndCountResult struct {
@@ -23,16 +17,10 @@ type FindAndCountResult struct {
 	Data  []bson.Raw
 }
 
-func getCollection(collectionName string) *mongo.Collection {
-	return DB.Collection(collectionName)
-}
-
-// NewModel new a Model class
-func NewModel(collectionName string) *Model {
-	collection := getCollection(collectionName)
-	return &Model{
-		collection: collection,
-	}
+// Pagination page for query
+type Pagination struct {
+	Page     int64 `json:"page"`
+	PageSize int64 `json:"pageSize"`
 }
 
 // FindAndCount find data and number count
