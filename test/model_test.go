@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/pascallin/goose"
@@ -63,4 +64,9 @@ func TestDecode(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	result, err := userModel.FindOne(bson.M{"_id": userID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(result)
 }

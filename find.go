@@ -40,12 +40,10 @@ func (model *Model) clearPagination() {
 type FindAndCountResult struct {
 	Total int64
 	Data  []bson.Raw
-	// Data []reflect.Value
 }
 
 // FindAndCount find data and number count
 func (model *Model) FindAndCount(filter bson.M) (*FindAndCountResult, error) {
-	// var result []reflect.Value
 	var result []bson.Raw
 	options := &options.FindOptions{
 		Limit: model.findOpt.Limit,
@@ -64,15 +62,6 @@ func (model *Model) FindAndCount(filter bson.M) (*FindAndCountResult, error) {
 	}
 	defer cur.Close(ctx)
 	for cur.Next(ctx) {
-		// modelType := reflect.TypeOf(model.curValue).Elem()
-		// ptr := reflect.New(modelType)
-		// fmt.Println(modelType, ptr, ptr.Elem().Interface())
-		// err := cur.Decode(ptr.Elem().Interface())
-		// if err != nil {
-		// 	log.Fatal(err)
-		// 	continue
-		// }
-		// result = append(result, ptr)
 		result = append(result, cur.Current)
 	}
 	if err := cur.Err(); err != nil {
@@ -89,13 +78,15 @@ func (model *Model) FindAndCount(filter bson.M) (*FindAndCountResult, error) {
 }
 
 // FindOne find data by filter
-func (model *Model) FindOne(filter interface{}) (*mongo.SingleResult, error) {
+func (model *Model) FindOne(filter interface{}) (*mongo.SingleResult, err error) {
 	singleResult := model.collection.FindOne(context.Background(), filter)
-	if singleResult.Err() != nil {
-		// NOTE: skip error now for ignore "no documents in result" error
-		return nil, nil
+	err = singleResult.Err()
+	if err != nil {
+		if singleResult.Err() == mongo.ErrNoDocuments {
+			return nil, err
+		}
 	}
-	return singleResult, nil
+	return singleResult, err
 }
 
 // FindOneByID find data by _id
