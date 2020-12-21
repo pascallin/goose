@@ -9,6 +9,12 @@ type FindOption struct {
 	populateChain []string
 }
 
-func (model *Model) Limit() {
+func (model *Model) Limit(num int64) *Model {
+	model.findOpt.SetLimit(num)
+	return model
+}
 
+func (model *Model) Skip(num int64) *Model {
+	model.findOpt.SetSkip(num)
+	return model
 }

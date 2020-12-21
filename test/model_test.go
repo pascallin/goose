@@ -4,20 +4,21 @@ import (
 	"testing"
 
 	"github.com/joho/godotenv"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/pascallin/goose"
 )
 
 type User struct {
-	Id int `goose:"index=1,required"`
-	Name string `goose:"required"`
-	Email string `goose:"required"`
+	ID    primitive.ObjectID `goose:"objectID,primary,required" bson="_id"`
+	Name  string             `goose:"required" bson="name"`
+	Email string             `goose:"required" bson="email"`
 }
 
 type Post struct {
-	Id int `goose:"index=1"`
-	UserId int `goose:"index=1,populate=User"`
-	Title string `goose:"-"`
+	ID     primitive.ObjectID `goose:"objectID,primary" bson="_id"`
+	UserId int                `goose:"index=1,populate=User" bson="userId"`
+	Title  string             `goose:"-" bson="title"`
 }
 
 func TestDecode(t *testing.T) {
@@ -34,16 +35,18 @@ func TestDecode(t *testing.T) {
 	defer db.Close()
 
 	userModel := goose.NewModel("TestUsers", User{
-		Id: 1,
-		Name: "John Doe",
+		ID:    primitive.NewObjectID(),
+		Name:  "John Doe",
 		Email: "john@example",
 	})
 	postModel := goose.NewModel("TestPosts", Post{
-		Id: 1,
+		ID:     primitive.NewObjectID(),
 		UserId: 1,
-		Title: "test post",
+		Title:  "test post",
 	})
 
 	userModel.PrintTags()
 	postModel.GetFields()
+
+	userModel.Save()
 }

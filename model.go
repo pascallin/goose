@@ -1,42 +1,49 @@
 package goose
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
 
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-const tagName = "goose"
-
 type Field struct {
-	Key string
-	Index bool
+	Key                string
+	Index              bool
 	PopulateCollection string
-	PopulateField string
+	PopulateField      string
 }
 
 // Model Model class
 type Model struct {
-	collection *mongo.Collection
-	collectionName string
-	curStruct reflect.Type
-	curValue interface{}
-	fields []Field
+	collection      *mongo.Collection
+	collectionName  string
+	curStruct       reflect.Type
+	curValue        interface{}
+	fields          []Field
+	findOpt         FindOption
+	primaryKey      string
+	primaryKeyValue primitive.ObjectID
 }
 
-func getCollection(collectionName string) *mongo.Collection {
-	return DB.Collection(collectionName)
+func (model *Model) getCollection() (*mongo.Collection, error) {
+	if DB == nil {
+		return nil, errors.New("mongo not connected yet.")
+	}
+	return DB.Collection(model.collectionName), nil
 }
 
 // NewModel new a Model class
 func NewModel(collectionName string, curValue interface{}) *Model {
 	collection := getCollection(collectionName)
 	return &Model{
-		collection: collection,
-		curStruct: reflect.TypeOf(curValue),
-		curValue: curValue,
+		collection:     collection,
+		collectionName: collectionName,
+		curStruct:      reflect.TypeOf(curValue),
+		curValue:       curValue,
 	}
 }
 
@@ -54,12 +61,13 @@ func (model *Model) GetFields() {
 		}
 
 		args := strings.Split(tag, ",")
-		//index := false
-		//populateCollection := ""
-		//populateField := ""
 
 		for _, arg := range args {
-			fmt.Println(arg)
+			switch arg {
+			case primaryKeyTag:
+				model.primaryKey = field.Name
+				model.primaryKeyValue = field.
+			}
 		}
 	}
 }
