@@ -2,6 +2,7 @@ package test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -10,15 +11,16 @@ import (
 )
 
 type User struct {
-	ID    primitive.ObjectID `goose:"objectID,primary,required" bson="_id"`
-	Name  string             `goose:"required" bson="name"`
-	Email string             `goose:"required" bson="email"`
+	ID    primitive.ObjectID `goose:"primary" bson:"_id,omitempty" json:"_id,omitempty"`
+	Name  string             `goose:"-" bson:"name" json:"name"`
+	Email string             `goose:"-" bson:"email" json:"email"`
 }
 
 type Post struct {
-	ID     primitive.ObjectID `goose:"objectID,primary" bson="_id"`
-	UserId int                `goose:"index=1,populate=User" bson="userId"`
-	Title  string             `goose:"-" bson="title"`
+	ID        primitive.ObjectID `goose:"primary" bson:"_id,omitempty" json:"_id,omitempty"`
+	UserID    primitive.ObjectID `goose:"index=1,populate=User" bson:"userId" json:"userId"`
+	Title     string             `goose:"-" bson:"title" json:"title"`
+	CreatedAt time.Time          `goose:"-" bson:"createdAt" json:"createdAt"`
 }
 
 func TestDecode(t *testing.T) {
@@ -34,17 +36,20 @@ func TestDecode(t *testing.T) {
 	}
 	defer db.Close()
 
+	userID := primitive.NewObjectID()
+
 	user := &User{
-		ID:    primitive.NewObjectID(),
+		ID:    userID,
 		Name:  "John Doe",
 		Email: "john@example",
 	}
 	userModel := goose.NewModel("TestUsers", user)
-	// postModel := goose.NewModel("TestPosts", &Post{
-	// 	ID:     primitive.NewObjectID(),
-	// 	UserId: 1,
-	// 	Title:  "test post",
-	// })
+	postModel := goose.NewModel("TestPosts", &Post{
+		ID:        primitive.NewObjectID(),
+		UserID:    userID,
+		Title:     "test post",
+		CreatedAt: time.Now(),
+	})
 
 	user.Name = "Pascal Lin"
 
@@ -52,4 +57,10 @@ func TestDecode(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	err = postModel.Save()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 }

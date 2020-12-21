@@ -3,8 +3,9 @@ package goose
 const tagName = "goose"
 
 const (
+	// field level tags
 	indexTag      = "index"
-	populateTag   = "populate"
 	primaryKeyTag = "primary"
-	objectIDTag   = "objectID"
+	// row level tags
+	populateTag = "populate"
 )
