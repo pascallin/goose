@@ -34,19 +34,22 @@ func TestDecode(t *testing.T) {
 	}
 	defer db.Close()
 
-	userModel := goose.NewModel("TestUsers", User{
+	user := &User{
 		ID:    primitive.NewObjectID(),
 		Name:  "John Doe",
 		Email: "john@example",
-	})
-	postModel := goose.NewModel("TestPosts", Post{
-		ID:     primitive.NewObjectID(),
-		UserId: 1,
-		Title:  "test post",
-	})
+	}
+	userModel := goose.NewModel("TestUsers", user)
+	// postModel := goose.NewModel("TestPosts", &Post{
+	// 	ID:     primitive.NewObjectID(),
+	// 	UserId: 1,
+	// 	Title:  "test post",
+	// })
 
-	userModel.PrintTags()
-	postModel.GetFields()
+	user.Name = "Pascal Lin"
 
-	userModel.Save()
+	err = userModel.Save()
+	if err != nil {
+		t.Fatal(err)
+	}
 }

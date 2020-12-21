@@ -73,7 +73,8 @@ func (Model *Model) FindOne(filter bson.M) (*mongo.SingleResult, error) {
 	singleResult := Model.collection.
 		FindOne(context.Background(), filter)
 	if singleResult.Err() != nil {
-		return nil, singleResult.Err()
+		// NOTE: skip error now for ignore "no documents in result" error
+		return nil, nil
 	}
 	return singleResult, nil
 }
@@ -92,7 +93,7 @@ func (Model *Model) FindOneByID(id string) (*mongo.SingleResult, error) {
 }
 
 // FindOneByIDAndUpdate find one and update by id
-func (Model *Model) FindOneByIDAndUpdate(id string, updates bson.M) (*mongo.SingleResult, error) {
+func (Model *Model) FindOneByIDAndUpdate(id string, updates interface{}) (*mongo.SingleResult, error) {
 	after := options.After
 	mongoID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -114,7 +115,7 @@ func (Model *Model) FindOneByIDAndUpdate(id string, updates bson.M) (*mongo.Sing
 }
 
 // FindOneAndUpdate find one and update by filter
-func (Model *Model) FindOneAndUpdate(filter bson.M, updates bson.M) (*mongo.SingleResult, error) {
+func (Model *Model) FindOneAndUpdate(filter bson.M, updates interface{}) (*mongo.SingleResult, error) {
 	after := options.After
 	singleResult := Model.collection.FindOneAndUpdate(
 		context.Background(),
