@@ -78,15 +78,15 @@ func (model *Model) FindAndCount(filter bson.M) (*FindAndCountResult, error) {
 }
 
 // FindOne find data by filter
-func (model *Model) FindOne(filter interface{}) (*mongo.SingleResult, err error) {
-	singleResult := model.collection.FindOne(context.Background(), filter)
-	err = singleResult.Err()
+func (model *Model) FindOne(filter interface{}) (result *mongo.SingleResult, err error) {
+	result = model.collection.FindOne(context.Background(), filter)
+	err = result.Err()
 	if err != nil {
-		if singleResult.Err() == mongo.ErrNoDocuments {
-			return nil, err
+		if result.Err() == mongo.ErrNoDocuments {
+			return nil, nil
 		}
 	}
-	return singleResult, err
+	return result, err
 }
 
 // FindOneByID find data by _id
