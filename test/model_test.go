@@ -12,19 +12,60 @@ import (
 )
 
 type User struct {
-	ID    primitive.ObjectID `goose:"primary" bson:"_id,omitempty" json:"_id,omitempty"`
-	Name  string             `goose:"-" bson:"name" json:"name"`
-	Email string             `goose:"-" bson:"email" json:"email"`
+	ID    primitive.ObjectID `goose:"primary" bson:"_id,omitempty""`
+	Name  string             `goose:"-" bson:"name,omitempty"`
+	Email string             `goose:"-" bson:"email,omitempty"`
 }
 
 type Post struct {
-	ID        primitive.ObjectID `goose:"primary" bson:"_id,omitempty" json:"_id,omitempty"`
-	UserID    primitive.ObjectID `goose:"index=1,populate=User" bson:"userId" json:"userId"`
-	Title     string             `goose:"-" bson:"title" json:"title"`
-	CreatedAt time.Time          `goose:"-" bson:"createdAt" json:"createdAt"`
+	ID        primitive.ObjectID `goose:"primary" bson:"_id,omitempty"`
+	UserID    primitive.ObjectID `goose:"index=1,populate=User" bson:"userId,omitempty"`
+	Title     string             `goose:"-" bson:"title,omitempty"`
+	CreatedAt time.Time          `goose:"-" bson:"createdAt,omitempty"`
 }
 
-func TestDecode(t *testing.T) {
+// func TestModel(t *testing.T) {
+// 	err := godotenv.Load()
+// 	if err != nil {
+// 		t.Error(err)
+// 	}
+// 	db, err := goose.NewMongoDatabase(&goose.DatabaseOptions{
+// 		UsingEnv: true,
+// 	})
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	defer db.Close()
+// 	userID := primitive.NewObjectID()
+// 	user := &User{
+// 		ID:    userID,
+// 		Name:  "John Doe",
+// 		Email: "john@example",
+// 	}
+// 	userModel := goose.NewModel("TestUsers", user)
+// 	postModel := goose.NewModel("TestPosts", &Post{
+// 		ID:        primitive.NewObjectID(),
+// 		UserID:    userID,
+// 		Title:     "test post",
+// 		CreatedAt: time.Now(),
+// 	})
+// 	user.Name = "Pascal Lin"
+// 	err  userModel.Save()
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	err = postModel.Save()
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	result, err := userModel.FindOne(bson.M{"_id": userID})
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	t.Log(result)
+// }
+
+func TestPopulate(t *testing.T) {
 	err := godotenv.Load()
 	if err != nil {
 		t.Error(err)
@@ -36,35 +77,8 @@ func TestDecode(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer db.Close()
-
-	userID := primitive.NewObjectID()
-
-	user := &User{
-		ID:    userID,
-		Name:  "John Doe",
-		Email: "john@example",
-	}
-	userModel := goose.NewModel("TestUsers", user)
-	postModel := goose.NewModel("TestPosts", &Post{
-		ID:        primitive.NewObjectID(),
-		UserID:    userID,
-		Title:     "test post",
-		CreatedAt: time.Now(),
-	})
-
-	user.Name = "Pascal Lin"
-
-	err = userModel.Save()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = postModel.Save()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	result, err := userModel.FindOne(bson.M{"_id": userID})
+	postModel := goose.NewModel("TestPosts", &Post{})
+	result, err := postModel.Populate("TestUsers").Find(bson.M{})
 	if err != nil {
 		t.Fatal(err)
 	}

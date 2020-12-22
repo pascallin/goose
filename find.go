@@ -18,7 +18,7 @@ var (
 
 type FindOption struct {
 	options.FindOptions
-	populateChain []string
+	pipeline []primitive.D
 }
 
 func (model *Model) Limit(num int64) *Model {
@@ -28,6 +28,12 @@ func (model *Model) Limit(num int64) *Model {
 
 func (model *Model) Skip(num int64) *Model {
 	model.findOpt.SetSkip(num)
+	return model
+}
+
+func (model *Model) Populate(collectionName string) *Model {
+	lookupStage := bson.D{{"$lookup", bson.D{{"from", collectionName}, {"localField", "userId"}, {"foreignField", "_id"}, {"as", collectionName}}}}
+	model.findOpt.pipeline = append(model.findOpt.pipeline, lookupStage)
 	return model
 }
 
@@ -61,6 +67,7 @@ func (model *Model) FindAndCount(filter bson.M) (*FindAndCountResult, error) {
 		return nil, err
 	}
 	defer cur.Close(ctx)
+	cur.Current.Lookup()
 	for cur.Next(ctx) {
 		result = append(result, cur.Current)
 	}
@@ -75,6 +82,21 @@ func (model *Model) FindAndCount(filter bson.M) (*FindAndCountResult, error) {
 		Total: total,
 		Data:  result,
 	}, nil
+}
+
+func (model *Model) Find(filter interface{}) (result []bson.M, err error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	showLoadedCursor, err := model.collection.Aggregate(ctx, model.findOpt.pipeline)
+	if err != nil {
+		return nil, err
+	}
+	var showsLoaded []bson.M
+	if err = showLoadedCursor.All(ctx, &showsLoaded); err != nil {
+		return nil, err
+	}
+	return showsLoaded, nil
 }
 
 // FindOne find data by filter

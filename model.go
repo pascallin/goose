@@ -8,6 +8,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+type Relation struct {
+	from         string
+	localField   string
+	foreignField string
+}
+
 // Model Model class
 type Model struct {
 	collection      *mongo.Collection
@@ -16,6 +22,7 @@ type Model struct {
 	curValue        interface{}
 	primaryKey      string
 	primaryKeyValue interface{}
+	relationship    []Relation
 }
 
 func (model *Model) getCollection() (*mongo.Collection, error) {
@@ -50,12 +57,16 @@ func (model *Model) getFields() {
 			continue
 		}
 
-		args := strings.Split(tag, ",")
-		for _, arg := range args {
+		for _, arg := range strings.Split(tag, ",") {
 			switch arg {
 			case primaryKeyTag:
 				model.primaryKey = typeField.Name
 				model.primaryKeyValue = valueField.Interface()
+			case populateTag:
+				model.relationship = append(model.relationship, Relation{
+					from:       arg,
+					localField: typeField.Name,
+				})
 			}
 		}
 	}
