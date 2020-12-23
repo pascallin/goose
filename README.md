@@ -1,6 +1,6 @@
 # goose
 
-A more human known interface mongo package base on `mongo-driver`, inspired by Node.JS package `mongoose`
+A golang struct tags(schema) style mongo package hyper interface base on `mongo-driver`, inspired by Node.JS package `mongoose`
 
 ## Document
 
