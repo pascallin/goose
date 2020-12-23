@@ -7,5 +7,7 @@ const (
 	indexTag      = "index"
 	primaryKeyTag = "primary"
 	// row level tags
-	populateTag = "populate"
+	refTag       = "ref"
+	forignKeyTag = "forignKey"
+	populateTag  = "populate"
 )

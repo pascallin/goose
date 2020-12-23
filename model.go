@@ -5,6 +5,8 @@ import (
 	"reflect"
 	"strings"
 
+	"go.mongodb.org/mongo-driver/bson/bsoncodec"
+
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -12,6 +14,7 @@ type Relation struct {
 	from         string
 	localField   string
 	foreignField string
+	as           string
 }
 
 // Model Model class
@@ -40,11 +43,11 @@ func NewModel(collectionName string, curValue interface{}) *Model {
 		collectionName: collectionName,
 		curValue:       curValue,
 	}
-	model.getFields()
+	model.structTagParse()
 	return model
 }
 
-func (model *Model) getFields() {
+func (model *Model) structTagParse() {
 	val := reflect.ValueOf(model.curValue).Elem()
 
 	for i := 0; i < val.NumField(); i++ {
@@ -52,20 +55,43 @@ func (model *Model) getFields() {
 		typeField := val.Type().Field(i)
 		tag := typeField.Tag.Get(tagName)
 
+		bsonTags, err := bsoncodec.DefaultStructTagParser(typeField)
+		if err != nil {
+			continue
+		}
+
 		//Skip if tag is not defined or ignored
 		if tag == "" || tag == "-" {
 			continue
 		}
 
 		for _, arg := range strings.Split(tag, ",") {
-			switch arg {
+			tagKey := arg
+			var tagVal string
+			if strings.Contains(string(arg), "=") {
+				tagKey = strings.Split(arg, "=")[0]
+				tagVal = strings.Split(arg, "=")[1]
+			}
+			switch tagKey {
 			case primaryKeyTag:
-				model.primaryKey = typeField.Name
+				// model.primaryKey = typeField.Name
+				model.primaryKey = bsonTags.Name
 				model.primaryKeyValue = valueField.Interface()
 			case populateTag:
+				ref, ok := typeField.Tag.Lookup(refTag)
+				if !ok {
+					ref = tagVal
+				}
+				forignKey, ok := typeField.Tag.Lookup(forignKeyTag)
+				if !ok {
+					forignKey = "_id"
+				}
 				model.relationship = append(model.relationship, Relation{
-					from:       arg,
-					localField: typeField.Name,
+					from: ref,
+					as:   tagVal,
+					// localField: typeField.Name,
+					localField:   bsonTags.Name,
+					foreignField: forignKey,
 				})
 			}
 		}

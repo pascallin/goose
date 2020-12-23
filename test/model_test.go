@@ -19,7 +19,7 @@ type User struct {
 
 type Post struct {
 	ID        primitive.ObjectID `goose:"primary" bson:"_id,omitempty"`
-	UserID    primitive.ObjectID `goose:"index=1,populate=User" bson:"userId,omitempty"`
+	UserID    primitive.ObjectID `goose:"index=1,populate=User" bson:"userId,omitempty" ref:"TestUsers" forignKey:"_id"`
 	Title     string             `goose:"-" bson:"title,omitempty"`
 	CreatedAt time.Time          `goose:"-" bson:"createdAt,omitempty"`
 }
@@ -78,7 +78,7 @@ func TestPopulate(t *testing.T) {
 	}
 	defer db.Close()
 	postModel := goose.NewModel("TestPosts", &Post{})
-	result, err := postModel.Populate("TestUsers").Find(bson.M{})
+	result, err := postModel.Populate("User").Find(bson.M{})
 	if err != nil {
 		t.Fatal(err)
 	}

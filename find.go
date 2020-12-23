@@ -32,8 +32,19 @@ func (model *Model) Skip(num int64) *Model {
 }
 
 func (model *Model) Populate(collectionName string) *Model {
-	lookupStage := bson.D{{"$lookup", bson.D{{"from", collectionName}, {"localField", "userId"}, {"foreignField", "_id"}, {"as", collectionName}}}}
-	model.findOpt.pipeline = append(model.findOpt.pipeline, lookupStage)
+	for _, relation := range model.relationship {
+		lookupStage := bson.D{
+			{
+				"$lookup",
+				bson.D{
+					{"from", relation.from},
+					{"localField", relation.localField},
+					{"foreignField", relation.foreignField},
+					{"as", relation.as}},
+			},
+		}
+		model.findOpt.pipeline = append(model.findOpt.pipeline, lookupStage)
+	}
 	return model
 }
 

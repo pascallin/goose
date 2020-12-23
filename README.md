@@ -87,6 +87,7 @@ Using `goose`, you can using tags to specific some data relationship and normal 
 |TagName | Usage | Description|
 |--- | --- | ---|
 | primary | `goose="primary"` | define a primary key for you collection model |
+| populate | `goose="populate=User"` or `goose="populate=User" ref="Users" foreignKey="userId"` | populate data from other collection, `ref` and `foreignKey` is optional |
 
 ## Development
 
