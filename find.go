@@ -16,21 +16,25 @@ var (
 	defaultLimit int64 = 20
 )
 
+// FindOption goose custom FindOption extends mongo.options.FindOption
 type FindOption struct {
 	options.FindOptions
 	pipeline []primitive.D
 }
 
+// Limit set limit for find
 func (model *Model) Limit(num int64) *Model {
 	model.findOpt.SetLimit(num)
 	return model
 }
 
+// Skip set skip for find
 func (model *Model) Skip(num int64) *Model {
 	model.findOpt.SetSkip(num)
 	return model
 }
 
+// Populate populate data from other collection
 func (model *Model) Populate(collectionName string) *Model {
 	for _, relation := range model.relationship {
 		lookupStage := bson.D{
@@ -95,6 +99,7 @@ func (model *Model) FindAndCount(filter bson.M) (*FindAndCountResult, error) {
 	}, nil
 }
 
+// Find support populate find operation
 func (model *Model) Find(filter interface{}) (result []bson.M, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()

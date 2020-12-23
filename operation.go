@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+// Save insert or update model
 func (model *Model) Save() error {
 	key := model.primaryKey
 	value := model.primaryKeyValue

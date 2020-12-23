@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// Relation model relation for populate
 type Relation struct {
 	from         string
 	localField   string
