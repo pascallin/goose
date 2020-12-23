@@ -49,7 +49,7 @@ func (model *Model) FindOneByIDAndUpdate(id string, updates interface{}) (*mongo
 	}
 	singleResult := model.collection.FindOneAndUpdate(
 		context.Background(),
-		bson.M{"_id": mongoID},
+		bson.M{model.primaryKey: mongoID},
 		bson.M{
 			"$set": updates,
 		},
@@ -91,7 +91,7 @@ func (model *Model) DeleteOneByID(id string) (*mongo.DeleteResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	return model.collection.DeleteOne(context.Background(), bson.M{"_id": mongoID})
+	return model.collection.DeleteOne(context.Background(), bson.M{model.primaryKey: mongoID})
 }
 
 // BulkWrite insert batch records

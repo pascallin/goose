@@ -122,13 +122,13 @@ func (model *Model) FindOne(filter interface{}) (result *mongo.SingleResult, err
 	return result, err
 }
 
-// FindOneByID find data by _id
+// FindOneByID find data by model.primaryKey
 func (model *Model) FindOneByID(id string) (*mongo.SingleResult, error) {
 	mongoID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
 	}
-	singleResult := model.collection.FindOne(context.Background(), bson.M{"_id": mongoID})
+	singleResult := model.collection.FindOne(context.Background(), bson.M{model.primaryKey: mongoID})
 	if singleResult.Err() != nil {
 		return nil, singleResult.Err()
 	}

@@ -1,11 +1,11 @@
 package goose
 
 import (
-	"errors"
 	"reflect"
 	"strings"
 
 	"go.mongodb.org/mongo-driver/bson/bsoncodec"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -28,11 +28,11 @@ type Model struct {
 	relationship    []Relation
 }
 
-func (model *Model) getCollection() (*mongo.Collection, error) {
-	if DB == nil {
-		return nil, errors.New("Mongo not connected yet. ")
-	}
-	return DB.Collection(model.collectionName), nil
+func (model *Model) getCollection() *mongo.Collection {
+	// if DB == nil {
+	// 	return nil, errors.New("Mongo not connected yet. ")
+	// }
+	return DB.Collection(model.collectionName)
 }
 
 // NewModel new a Model class
@@ -44,6 +44,7 @@ func NewModel(collectionName string, curValue interface{}) *Model {
 		curValue:       curValue,
 	}
 	model.structTagParse()
+	model.initModel()
 	return model
 }
 
@@ -95,5 +96,14 @@ func (model *Model) structTagParse() {
 				})
 			}
 		}
+	}
+}
+
+func (model *Model) initModel() {
+	if model.primaryKey == "" {
+		model.primaryKey = "_id"
+	}
+	if model.primaryKeyValue == primitive.NilObjectID {
+		model.primaryKeyValue = primitive.NewObjectID()
 	}
 }
