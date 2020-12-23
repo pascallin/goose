@@ -1,9 +1,12 @@
 package goose
 
 import (
+	"context"
+	"log"
 	"reflect"
 	"strings"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
@@ -79,6 +82,14 @@ func (model *Model) structTagParse() {
 				// model.primaryKey = typeField.Name
 				model.primaryKey = bsonTags.Name
 				model.primaryKeyValue = valueField.Interface()
+			case indexTag:
+				_, err := model.collection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
+					Keys: bson.D{{bsonTags.Name, 1}},
+				})
+				if err != nil {
+					log.Fatal(err)
+					continue
+				}
 			case populateTag:
 				ref, ok := typeField.Tag.Lookup(refTag)
 				if !ok {

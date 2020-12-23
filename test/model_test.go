@@ -19,9 +19,9 @@ type User struct {
 
 type Post struct {
 	ID        primitive.ObjectID `goose:"primary" bson:"_id,omitempty"`
-	UserID    primitive.ObjectID `goose:"index=1,populate=User" bson:"userId,omitempty" ref:"TestUsers" forignKey:"_id"`
+	UserID    primitive.ObjectID `goose:"populate=User" bson:"userId,omitempty" ref:"TestUsers" forignKey:"_id"`
 	Title     string             `goose:"-" bson:"title,omitempty"`
-	CreatedAt time.Time          `goose:"-" bson:"createdAt,omitempty"`
+	CreatedAt time.Time          `goose:"index" bson:"createdAt,omitempty"`
 }
 
 // func TestModel(t *testing.T) {
