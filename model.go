@@ -21,11 +21,13 @@ type Relation struct {
 	as           string
 }
 
+// Field model field, just using in model time for now
 type Field struct {
 	StructFieldName string
 	BsonName        string
 }
 
+// ModelTime model time
 type ModelTime struct {
 	createdAtField *Field
 	updatedAtField *Field
