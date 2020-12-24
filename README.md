@@ -87,7 +87,8 @@ Using `goose`, you can using tags to specific some data relationship and normal 
 |TagName | Usage | Description|
 |--- | --- | ---|
 | primary | `goose="primary"` | define a primary key for you collection model |
-| index | `goose="index"` | add field indexes to collection
+| index | `goose="index"` | add field indexes to collection |
+| default |  `goose:"default='test'"` or `goose:"default=1"` or `goose:"default=1.1"` or `goose:"default=false"` | set default value for model field, `string` should be quote by `'` and not including `,`; int and float will convert to 64 bit, you should not add `bson:omitempty` if `default=0` |
 | populate | `goose="populate=User"` or `goose="populate=User" ref="Users" foreignKey="userId"` | populate data from other collection, `ref` and `foreignKey` is optional |
 | createdAt | `goose:"createdAt"` | set a created time
 | updatedAt | `goose:"createdAt"` | set a updated time

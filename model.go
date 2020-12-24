@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -25,6 +26,7 @@ type Relation struct {
 type Field struct {
 	StructFieldName string
 	BsonName        string
+	DefaultValue    interface{}
 }
 
 // ModelTime model time
@@ -102,6 +104,34 @@ func (model *Model) structTagParse() {
 				if err != nil {
 					log.Fatal(err)
 					continue
+				}
+			case defaultTag:
+				if reflect.ValueOf(model.curValue).Elem().FieldByName(typeField.Name).IsZero() {
+					switch valueField.Kind() {
+					case reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8:
+						iVal, err := strconv.ParseInt(tagVal, 10, 64)
+						if err != nil {
+							log.Fatal(err)
+							continue
+						}
+						valueField.SetInt(iVal)
+					case reflect.Float32, reflect.Float64:
+						fVal, err := strconv.ParseFloat(tagVal, 64)
+						if err != nil {
+							log.Fatal(err)
+							continue
+						}
+						valueField.SetFloat(fVal)
+					case reflect.String:
+						valueField.SetString(strings.Trim(tagVal, "'"))
+					case reflect.Bool:
+						bVal, err := strconv.ParseBool(tagVal)
+						if err != nil {
+							log.Fatal(err)
+							continue
+						}
+						valueField.SetBool(bVal)
+					}
 				}
 			case createdAtTag:
 				model.modelTime.createdAtField = &Field{

@@ -22,8 +22,12 @@ type Post struct {
 	ID          primitive.ObjectID `goose:"primary" bson:"_id,omitempty"`
 	UserID      primitive.ObjectID `goose:"populate=User" bson:"userId,omitempty" ref:"TestUsers" forignKey:"_id"`
 	Title       string             `goose:"-" bson:"title,omitempty"`
+	Description string             `goose:"default='No description.'"  bson:"description,omitempty"`
 	CreatedTime time.Time          `goose:"index,createdAt" bson:"createdTime,omitempty"`
 	UpdatedTime time.Time          `goose:"updatedAt" bson:"updatedTime,omitempty"`
+	ViewCount   int64              `goose:"default=0" bson:"viewCount"`
+	Rate        float64            `goose:"default=0" bson:"rate"`
+	IsPublished bool               `goose:"default=false" bson:"isPublished"`
 }
 
 // func TestModel(t *testing.T) {
