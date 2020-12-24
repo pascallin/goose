@@ -12,16 +12,18 @@ import (
 )
 
 type User struct {
-	ID    primitive.ObjectID `goose:"primary" bson:"_id,omitempty""`
-	Name  string             `goose:"-" bson:"name,omitempty"`
-	Email string             `goose:"-" bson:"email,omitempty"`
+	ID          primitive.ObjectID `goose:"primary" bson:"_id,omitempty""`
+	Name        string             `goose:"-" bson:"name,omitempty"`
+	Email       string             `goose:"-" bson:"email,omitempty"`
+	CreatedTime time.Time          `goose:"createdAt" bson:"createdTime,omitempty"`
 }
 
 type Post struct {
-	ID        primitive.ObjectID `goose:"primary" bson:"_id,omitempty"`
-	UserID    primitive.ObjectID `goose:"populate=User" bson:"userId,omitempty" ref:"TestUsers" forignKey:"_id"`
-	Title     string             `goose:"-" bson:"title,omitempty"`
-	CreatedAt time.Time          `goose:"index" bson:"createdAt,omitempty"`
+	ID          primitive.ObjectID `goose:"primary" bson:"_id,omitempty"`
+	UserID      primitive.ObjectID `goose:"populate=User" bson:"userId,omitempty" ref:"TestUsers" forignKey:"_id"`
+	Title       string             `goose:"-" bson:"title,omitempty"`
+	CreatedTime time.Time          `goose:"index,createdAt" bson:"createdTime,omitempty"`
+	UpdatedTime time.Time          `goose:"updatedAt" bson:"updatedTime,omitempty"`
 }
 
 // func TestModel(t *testing.T) {
@@ -50,7 +52,7 @@ type Post struct {
 // 		CreatedAt: time.Now(),
 // 	})
 // 	user.Name = "Pascal Lin"
-// 	err  userModel.Save()
+// 	err = userModel.Save()
 // 	if err != nil {
 // 		t.Fatal(err)
 // 	}
@@ -77,7 +79,29 @@ func TestPopulate(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer db.Close()
-	postModel := goose.NewModel("TestPosts", &Post{})
+
+	userID := primitive.NewObjectID()
+	user := User{
+		ID:    userID,
+		Name:  "John Doe",
+		Email: "john@example",
+	}
+	userModel := goose.NewModel("TestUsers", &user)
+	postModel := goose.NewModel("TestPosts", &Post{
+		UserID: userID,
+		Title:  "test post",
+	})
+	user.Name = "Pascal Lin"
+	err = userModel.Save()
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = postModel.Save()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	postModel = goose.NewModel("TestPosts", &Post{})
 	result, err := postModel.Populate("User").Find(bson.M{})
 	if err != nil {
 		t.Fatal(err)

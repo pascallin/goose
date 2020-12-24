@@ -2,6 +2,7 @@ package goose
 
 import (
 	"context"
+	"reflect"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -28,6 +29,9 @@ func (model *Model) Save() error {
 
 // InsertOne insert data into collection
 func (model *Model) InsertOne(v interface{}) (string, error) {
+	model.wrapCreatedAt(v)
+	model.wrapUpdatedAt(v)
+
 	data, err := bson.Marshal(v)
 	if err != nil {
 		return "", nil
@@ -43,6 +47,8 @@ func (model *Model) InsertOne(v interface{}) (string, error) {
 
 // FindOneByIDAndUpdate find one and update by id
 func (model *Model) FindOneByIDAndUpdate(id string, updates interface{}) (*mongo.SingleResult, error) {
+	model.wrapUpdatedAt(updates)
+
 	after := options.After
 	mongoID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -65,6 +71,8 @@ func (model *Model) FindOneByIDAndUpdate(id string, updates interface{}) (*mongo
 
 // FindOneAndUpdate find one and update by filter
 func (model *Model) FindOneAndUpdate(filter interface{}, updates interface{}) (*mongo.SingleResult, error) {
+	model.wrapUpdatedAt(updates)
+
 	after := options.After
 	singleResult := model.collection.FindOneAndUpdate(
 		context.Background(),
@@ -97,11 +105,15 @@ func (model *Model) DeleteOneByID(id string) (*mongo.DeleteResult, error) {
 
 // BulkWrite insert batch records
 func (model *Model) BulkWrite(models []mongo.WriteModel) (*mongo.BulkWriteResult, error) {
+	for i := range models {
+		model.wrapUpdatedAt(models[i])
+	}
 	return model.collection.BulkWrite(context.Background(), models)
 }
 
 // UpdateMany update batch records
 func (model *Model) UpdateMany(filter interface{}, updates interface{}) (*mongo.UpdateResult, error) {
+	model.wrapUpdatedAt(updates)
 	return model.collection.UpdateMany(context.Background(), filter, updates)
 }
 
@@ -112,10 +124,41 @@ func (model *Model) DeleteMany(filter interface{}) (*mongo.DeleteResult, error) 
 
 // SoftDeleteOne soft delete single record
 func (model *Model) SoftDeleteOne(filter interface{}) (*mongo.UpdateResult, error) {
-	return model.collection.UpdateOne(context.Background(), filter, bson.M{"deletedAt": time.Now()})
+	return model.collection.UpdateOne(context.Background(), filter, bson.M{
+		model.modelTime.deletedAtField.BsonName: time.Now(),
+	})
 }
 
 // SoftDeleteMany soft delete batch record
 func (model *Model) SoftDeleteMany(filter interface{}) (*mongo.UpdateResult, error) {
-	return model.collection.UpdateMany(context.Background(), filter, bson.M{"deletedAt": time.Now()})
+	return model.collection.UpdateMany(context.Background(), filter, bson.M{
+		model.modelTime.deletedAtField.BsonName: time.Now(),
+	})
+}
+
+func (model *Model) wrapCreatedAt(v interface{}) {
+	if model.modelTime.createdAtField != nil {
+		if reflect.ValueOf(v).Elem().FieldByName(model.modelTime.createdAtField.StructFieldName).CanSet() {
+			now := time.Now()
+			reflect.ValueOf(v).Elem().FieldByName(model.modelTime.createdAtField.StructFieldName).Set(reflect.ValueOf(now))
+		}
+	}
+}
+
+func (model *Model) wrapUpdatedAt(v interface{}) {
+	if model.modelTime.updatedAtField != nil {
+		if reflect.ValueOf(v).Elem().FieldByName(model.modelTime.updatedAtField.StructFieldName).CanSet() {
+			now := time.Now()
+			reflect.ValueOf(v).Elem().FieldByName(model.modelTime.updatedAtField.StructFieldName).Set(reflect.ValueOf(now))
+		}
+	}
+}
+
+func (model *Model) wrapDeletedAt(v interface{}) {
+	if model.modelTime.deletedAtField != nil {
+		if reflect.ValueOf(v).Elem().FieldByName(model.modelTime.deletedAtField.StructFieldName).CanSet() {
+			now := time.Now()
+			reflect.ValueOf(v).Elem().FieldByName(model.modelTime.deletedAtField.StructFieldName).Set(reflect.ValueOf(now))
+		}
+	}
 }

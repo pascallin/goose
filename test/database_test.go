@@ -22,11 +22,7 @@ func TestConnectUsingEnv(t *testing.T) {
 	}
 	defer db.Close()
 
-	// model := goose.NewModel("test")
-
-	// id, err := model.InsertOne(bson.M{"name": "test"})
-
-	// t.Log(id)
+	t.Log("Mongo connected.")
 }
 
 func TestConnectUsingURL(t *testing.T) {
@@ -42,9 +38,5 @@ func TestConnectUsingURL(t *testing.T) {
 	}
 	defer db.Close()
 
-	// model := goose.NewModel("test")
-
-	// id, err := model.InsertOne(bson.M{"name": "test 1"})
-
-	// t.Log(id)
+	t.Log("Mongo connected.")
 }

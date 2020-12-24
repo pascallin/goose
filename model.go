@@ -21,6 +21,17 @@ type Relation struct {
 	as           string
 }
 
+type Field struct {
+	StructFieldName string
+	BsonName        string
+}
+
+type ModelTime struct {
+	createdAtField *Field
+	updatedAtField *Field
+	deletedAtField *Field
+}
+
 // Model Model class
 type Model struct {
 	collection      *mongo.Collection
@@ -30,6 +41,7 @@ type Model struct {
 	primaryKey      string
 	primaryKeyValue interface{}
 	relationship    []Relation
+	modelTime       ModelTime
 }
 
 func (model *Model) getCollection() *mongo.Collection {
@@ -54,7 +66,6 @@ func NewModel(collectionName string, curValue interface{}) *Model {
 
 func (model *Model) structTagParse() {
 	val := reflect.ValueOf(model.curValue).Elem()
-
 	for i := 0; i < val.NumField(); i++ {
 		valueField := val.Field(i)
 		typeField := val.Type().Field(i)
@@ -89,6 +100,21 @@ func (model *Model) structTagParse() {
 				if err != nil {
 					log.Fatal(err)
 					continue
+				}
+			case createdAtTag:
+				model.modelTime.createdAtField = &Field{
+					BsonName:        bsonTags.Name,
+					StructFieldName: typeField.Name,
+				}
+			case updatedAtTag:
+				model.modelTime.updatedAtField = &Field{
+					BsonName:        bsonTags.Name,
+					StructFieldName: typeField.Name,
+				}
+			case deletedAtTag:
+				model.modelTime.deletedAtField = &Field{
+					BsonName:        bsonTags.Name,
+					StructFieldName: typeField.Name,
 				}
 			case populateTag:
 				ref, ok := typeField.Tag.Lookup(refTag)
