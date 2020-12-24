@@ -10,7 +10,7 @@ Once you connect database in main function, you can new a model in everywhere.
 
 #### Connect to Mongo by `.env` file
 
-```golang
+```go
 func main() {
   err := godotenv.Load()
   if err != nil {
@@ -30,7 +30,7 @@ func main() {
 
 #### Connect to Mongo
 
-```golang
+```go
   mongoConnStringTemplate := "mongodb://%s:%s@%s:%s"
   connectionURI := fmt.Sprintf(mongoConnStringTemplate, "root", "example", "localhost", "27017")
 
@@ -50,7 +50,7 @@ func main() {
 
 #### Init a model
 
-```golang
+```go
 // define struct as a schema
 type User struct {
   ID    primitive.ObjectID `goose:"objectID,primary,required" bson="_id"`
@@ -89,6 +89,22 @@ Using `goose`, you can using tags to specific some data relationship and normal 
 | primary | `goose="primary"` | define a primary key for you collection model |
 | index | `goose="index"` | add field indexes to collection
 | populate | `goose="populate=User"` or `goose="populate=User" ref="Users" foreignKey="userId"` | populate data from other collection, `ref` and `foreignKey` is optional |
+| createdAt | `goose:"createdAt"` | set a created time
+| updatedAt | `goose:"createdAt"` | set a updated time
+| deletedAt | `goose:"createdAt"` | set a soft delete time and as soft delete signal
+| - | `goose:"-"` | do nothing
+
+A whole example:
+
+```go
+type Post struct {
+  ID          primitive.ObjectID `goose:"primary" bson:"_id,omitempty"`
+  UserID      primitive.ObjectID `goose:"populate=User" bson:"userId,omitempty" ref:"TestUsers" forignKey:"_id"`
+  Title       string             `goose:"-" bson:"title,omitempty"`
+  CreatedTime time.Time          `goose:"index,createdAt" bson:"createdTime,omitempty"`
+  UpdatedTime time.Time          `goose:"updatedAt" bson:"updatedTime,omitempty"`
+}
+```
 
 ## Development
 
