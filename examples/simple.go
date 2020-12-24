@@ -1,14 +1,15 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/pascallin/goose"
-	"github.com/pascallin/goose/vendor/github.com/joho/godotenv"
-	"github.com/pascallin/goose/vendor/go.mongodb.org/mongo-driver/bson"
-	"github.com/pascallin/goose/vendor/go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type User struct {
@@ -70,4 +71,11 @@ func main() {
 		log.Fatal(err)
 	}
 	fmt.Println("result: ", result)
+
+	fmt.Println("======================")
+
+	singleResult := goose.DB.Collection("TestUsers").FindOne(context.Background(), bson.M{"_id": userID})
+	var userResult User
+	singleResult.Decode(&userResult)
+	fmt.Println("user: ", userResult)
 }

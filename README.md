@@ -2,6 +2,14 @@
 
 A golang struct tags(schema) style mongo package hyper interface base on `mongo-driver`, inspired by Node.JS package `mongoose`
 
+## Examples
+
+You can check the `/examples/` folder.
+
+```shell
+cd ./examples && go run ./simple.go
+```
+
 ## Document
 
 ### Database
@@ -105,6 +113,17 @@ type Post struct {
   CreatedTime time.Time          `goose:"index,createdAt" bson:"createdTime,omitempty"`
   UpdatedTime time.Time          `goose:"updatedAt" bson:"updatedTime,omitempty"`
 }
+```
+
+### Collection
+
+You can still using collection from `mongo-driver` database as usual. such as,
+
+```go
+singleResult := goose.DB.Collection("TestUsers").FindOne(context.Background(), bson.M{"_id": userID})
+var userResult User
+singleResult.Decode(&userResult)
+fmt.Println("user: ", userResult)
 ```
 
 ## Development
