@@ -19,6 +19,7 @@ const (
 	indexTag      = "index"
 	primaryKeyTag = "primary"
 	defaultTag    = "default"
+	objectIDTag   = "objectID"
 	// time
 	createdAtTag = "createdAt"
 	updatedAtTag = "updatedAt"
@@ -30,7 +31,7 @@ const (
 )
 
 func (model *Model) structTagParse() {
-	val := reflect.ValueOf(model.curValue).Elem()
+	val := reflect.ValueOf(model.CurValue).Elem()
 	for i := 0; i < val.NumField(); i++ {
 		valueField := val.Field(i)
 		typeField := val.Type().Field(i)
@@ -55,9 +56,16 @@ func (model *Model) structTagParse() {
 			}
 			switch tagKey {
 			case primaryKeyTag:
-				// model.primaryKey = typeField.Name
-				model.primaryKey = bsonTags.Name
-				model.primaryKeyValue = valueField.Interface()
+				modelField := model.getField(typeField.Name)
+				if modelField != nil {
+					modelField.IsPrimary = true
+				} else {
+					model.fields = append(model.fields, &Field{
+						BsonName:        bsonTags.Name,
+						StructFieldName: typeField.Name,
+						IsPrimary:       true,
+					})
+				}
 			case indexTag:
 				_, err := model.collection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
 					Keys: bson.D{{bsonTags.Name, 1}},
@@ -67,7 +75,7 @@ func (model *Model) structTagParse() {
 					continue
 				}
 			case defaultTag:
-				if reflect.ValueOf(model.curValue).Elem().FieldByName(typeField.Name).IsZero() {
+				if reflect.ValueOf(model.CurValue).Elem().FieldByName(typeField.Name).IsZero() {
 					switch valueField.Kind() {
 					case reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8:
 						iVal, err := strconv.ParseInt(tagVal, 10, 64)
@@ -118,7 +126,7 @@ func (model *Model) structTagParse() {
 				if !ok {
 					forignKey = "_id"
 				}
-				model.relationship = append(model.relationship, Relation{
+				model.refs = append(model.refs, Ref{
 					from: ref,
 					as:   tagVal,
 					// localField: typeField.Name,

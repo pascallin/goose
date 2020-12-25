@@ -3,6 +3,7 @@ package goose
 import (
 	"context"
 	"log"
+	"reflect"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -36,7 +37,7 @@ func (model *Model) Skip(num int64) *Model {
 
 // Populate populate data from other collection
 func (model *Model) Populate(collectionName string) *Model {
-	for _, relation := range model.relationship {
+	for _, relation := range model.refs {
 		lookupStage := bson.D{
 			{
 				"$lookup",
@@ -71,7 +72,7 @@ func (model *Model) FindAndCount(filter bson.M) (*FindAndCountResult, error) {
 		Skip:  model.findOpt.Skip,
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 	defer func() {
 		model.clearPagination()
 		cancel()
@@ -101,7 +102,7 @@ func (model *Model) FindAndCount(filter bson.M) (*FindAndCountResult, error) {
 
 // Find support populate find operation
 func (model *Model) Find(filter interface{}) (result []bson.M, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 	defer cancel()
 
 	showLoadedCursor, err := model.collection.Aggregate(ctx, model.findOpt.pipeline)
@@ -116,26 +117,30 @@ func (model *Model) Find(filter interface{}) (result []bson.M, err error) {
 }
 
 // FindOne find data by filter
-func (model *Model) FindOne(filter interface{}) (result *mongo.SingleResult, err error) {
-	result = model.collection.FindOne(context.Background(), filter)
-	err = result.Err()
-	if err != nil {
-		if result.Err() == mongo.ErrNoDocuments {
-			return nil, nil
-		}
+func (model *Model) FindOne(filter interface{}) (result interface{}, err error) {
+	singleResult := model.collection.FindOne(context.TODO(), filter)
+	err = singleResult.Err()
+	if err != nil && singleResult.Err() == mongo.ErrNoDocuments {
+		return nil, nil
 	}
+	result = singleResult.Decode(reflect.ValueOf(model.CurValue).Elem().Interface())
 	return result, err
 }
 
 // FindOneByID find data by model.primaryKey
-func (model *Model) FindOneByID(id string) (*mongo.SingleResult, error) {
-	mongoID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return nil, err
+func (model *Model) FindOneByID(id interface{}) (result interface{}, err error) {
+	primaryField := model.getPrimaryField()
+	if reflect.ValueOf(id).Kind() == reflect.String {
+		id, err = primitive.ObjectIDFromHex(id.(string))
+		if err != nil {
+			return nil, err
+		}
 	}
-	singleResult := model.collection.FindOne(context.Background(), bson.M{model.primaryKey: mongoID})
-	if singleResult.Err() != nil {
-		return nil, singleResult.Err()
+	singleResult := model.collection.FindOne(context.TODO(), bson.M{primaryField.BsonName: id})
+	err = singleResult.Err()
+	if err != nil && singleResult.Err() == mongo.ErrNoDocuments {
+		return nil, nil
 	}
-	return singleResult, nil
+	result = singleResult.Decode(reflect.ValueOf(model.CurValue).Elem().Interface())
+	return result, err
 }

@@ -2,12 +2,11 @@ package goose
 
 import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
-
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// Relation model relation for populate
-type Relation struct {
+// Ref model relation for populate
+type Ref struct {
 	from         string
 	localField   string
 	foreignField string
@@ -19,6 +18,8 @@ type Field struct {
 	StructFieldName string
 	BsonName        string
 	DefaultValue    interface{}
+	CurrentValue    interface{}
+	IsPrimary       bool
 }
 
 // ModelTime model time
@@ -30,14 +31,13 @@ type ModelTime struct {
 
 // Model Model class
 type Model struct {
-	collection      *mongo.Collection
-	collectionName  string
-	findOpt         FindOption
-	curValue        interface{}
-	primaryKey      string
-	primaryKeyValue interface{}
-	relationship    []Relation
-	modelTime       ModelTime
+	collection     *mongo.Collection
+	collectionName string
+	CurValue       interface{}
+	fields         []*Field  // only specific field will in fields
+	modelTime      ModelTime // createdAt, updatedAt, deletedAt
+	refs           []Ref
+	findOpt        FindOption
 }
 
 func (model *Model) getCollection() *mongo.Collection {
@@ -47,13 +47,31 @@ func (model *Model) getCollection() *mongo.Collection {
 	return DB.Collection(model.collectionName)
 }
 
+func (model *Model) getField(structName string) *Field {
+	for _, field := range model.fields {
+		if field.StructFieldName == structName {
+			return field
+		}
+	}
+	return nil
+}
+
+func (model *Model) getPrimaryField() *Field {
+	for _, field := range model.fields {
+		if field.IsPrimary {
+			return field
+		}
+	}
+	return nil
+}
+
 // NewModel new a Model class
-func NewModel(collectionName string, curValue interface{}) *Model {
+func NewModel(collectionName string, CurValue interface{}) *Model {
 	collection := getCollection(collectionName)
 	model := &Model{
 		collection:     collection,
 		collectionName: collectionName,
-		curValue:       curValue,
+		CurValue:       CurValue,
 	}
 	model.structTagParse()
 	model.setDefault()
@@ -61,10 +79,13 @@ func NewModel(collectionName string, curValue interface{}) *Model {
 }
 
 func (model *Model) setDefault() {
-	if model.primaryKey == "" {
-		model.primaryKey = "_id"
-	}
-	if model.primaryKeyValue == primitive.NilObjectID {
-		model.primaryKeyValue = primitive.NewObjectID()
+	primaryField := model.getPrimaryField()
+	if primaryField == nil {
+		model.fields = append(model.fields, &Field{
+			StructFieldName: "ID",
+			BsonName:        "_id",
+			CurrentValue:    primitive.NewObjectID(),
+			IsPrimary:       true,
+		})
 	}
 }

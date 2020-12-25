@@ -2,6 +2,7 @@ package goose
 
 import (
 	"context"
+	"errors"
 	"reflect"
 	"time"
 
@@ -12,51 +13,60 @@ import (
 )
 
 // Save insert or update model
-func (model *Model) Save() error {
-	key := model.primaryKey
-	value := model.primaryKeyValue
-	record, err := model.FindOne(bson.M{key: value})
-	if err != nil {
-		return err
+func (model *Model) Save() (result interface{}, err error) {
+	primaryField := model.getPrimaryField()
+	if primaryField == nil {
+		return nil, errors.New("no primary field in model")
+	}
+	record, err := model.FindOneByID(primaryField.CurrentValue)
+	if err != nil && err == mongo.ErrNoDocuments {
+		return primitive.NilObjectID, err
 	}
 	if record != nil {
-		model.FindOneAndUpdate(bson.M{key: value}, model.curValue)
-	} else {
-		model.InsertOne(model.curValue)
+		r, err := model.FindOneByIDAndUpdate(primaryField.CurrentValue, model.CurValue)
+		if err != nil {
+			return nil, err
+		}
+		return r, nil
 	}
-	return nil
-}
-
-// InsertOne insert data into collection
-func (model *Model) InsertOne(v interface{}) (string, error) {
-	model.wrapCreatedAt(v)
-	model.wrapUpdatedAt(v)
-
-	data, err := bson.Marshal(v)
-	if err != nil {
-		return "", nil
-	}
-
-	insertResult, err := model.collection.InsertOne(context.Background(), data)
-	if err != nil {
-		return primitive.NilObjectID.String(), err
-	}
-
-	return insertResult.InsertedID.(primitive.ObjectID).Hex(), nil
-}
-
-// FindOneByIDAndUpdate find one and update by id
-func (model *Model) FindOneByIDAndUpdate(id string, updates interface{}) (*mongo.SingleResult, error) {
-	model.wrapUpdatedAt(updates)
-
-	after := options.After
-	mongoID, err := primitive.ObjectIDFromHex(id)
+	r, err := model.InsertOne(model.CurValue)
 	if err != nil {
 		return nil, err
 	}
+	return r, nil
+
+}
+
+// InsertOne insert data into collection
+func (model *Model) InsertOne(v interface{}) (result interface{}, err error) {
+	model.wrapCreatedAt(v)
+	model.wrapUpdatedAt(v)
+
+	insertResult, err := model.collection.InsertOne(context.TODO(), v)
+	if err != nil {
+		return nil, err
+	}
+
+	return insertResult.InsertedID, nil
+}
+
+// FindOneByIDAndUpdate find one and update by id, id can be objectID or string
+func (model *Model) FindOneByIDAndUpdate(id interface{}, updates interface{}) (result *mongo.SingleResult, err error) {
+	model.wrapUpdatedAt(updates)
+
+	primaryField := model.getPrimaryField()
+	if reflect.ValueOf(id).Kind() == reflect.String {
+		id, err = primitive.ObjectIDFromHex(id.(string))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	after := options.After
+
 	singleResult := model.collection.FindOneAndUpdate(
-		context.Background(),
-		bson.M{model.primaryKey: mongoID},
+		context.TODO(),
+		bson.M{primaryField.BsonName: id},
 		bson.M{
 			"$set": updates,
 		},
@@ -69,13 +79,25 @@ func (model *Model) FindOneByIDAndUpdate(id string, updates interface{}) (*mongo
 	return singleResult, nil
 }
 
+// DeleteOneByID delete record by id
+func (model *Model) DeleteOneByID(id interface{}) (result *mongo.DeleteResult, err error) {
+	primaryField := model.getPrimaryField()
+	if reflect.ValueOf(id).Kind() == reflect.String {
+		id, err = primitive.ObjectIDFromHex(id.(string))
+		if err != nil {
+			return nil, err
+		}
+	}
+	return model.collection.DeleteOne(context.TODO(), bson.M{primaryField.BsonName: id})
+}
+
 // FindOneAndUpdate find one and update by filter
 func (model *Model) FindOneAndUpdate(filter interface{}, updates interface{}) (*mongo.SingleResult, error) {
 	model.wrapUpdatedAt(updates)
 
 	after := options.After
 	singleResult := model.collection.FindOneAndUpdate(
-		context.Background(),
+		context.TODO(),
 		filter,
 		bson.M{
 			"$set": updates,
@@ -91,74 +113,63 @@ func (model *Model) FindOneAndUpdate(filter interface{}, updates interface{}) (*
 
 // DeleteOne delete record by filter
 func (model *Model) DeleteOne(filter interface{}) (*mongo.DeleteResult, error) {
-	return model.collection.DeleteOne(context.Background(), filter)
+	return model.collection.DeleteOne(context.TODO(), filter)
 }
 
-// DeleteOneByID delete record by id
-func (model *Model) DeleteOneByID(id string) (*mongo.DeleteResult, error) {
-	mongoID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return nil, err
+// BulkInsert insert batch records
+func (model *Model) BulkInsert(data []interface{}, opts ...*options.BulkWriteOptions) (*mongo.BulkWriteResult, error) {
+	var operations []mongo.WriteModel
+	for i := range data {
+		model.wrapUpdatedAt(data[i])
+		operation := mongo.NewInsertOneModel()
+		operation.SetDocument(data[i])
+		operations = append(operations, operation)
 	}
-	return model.collection.DeleteOne(context.Background(), bson.M{model.primaryKey: mongoID})
+	return model.collection.BulkWrite(context.TODO(), operations, opts...)
 }
 
-// BulkWrite insert batch records
-func (model *Model) BulkWrite(models []mongo.WriteModel) (*mongo.BulkWriteResult, error) {
-	for i := range models {
-		model.wrapUpdatedAt(models[i])
+// BulkUpdate update batch records, not finished
+func (model *Model) BulkUpdate(filter interface{}, data []interface{}, opts ...*options.BulkWriteOptions) (*mongo.BulkWriteResult, error) {
+	// TODO: here
+	// primaryField := model.getPrimaryField()
+	var operations []mongo.WriteModel
+	for i := range data {
+		model.wrapUpdatedAt(data[i])
+		operation := mongo.NewUpdateManyModel()
+		// operation.SetFilter(bson.M{primaryField.BsonName: data[i][primaryField.structName]})
+		operation.SetFilter(filter)
+		operation.SetUpdate(bson.M{"$set": data[i]})
+		operation.SetUpsert(true)
+		operations = append(operations, operation)
 	}
-	return model.collection.BulkWrite(context.Background(), models)
+	return model.collection.BulkWrite(context.TODO(), operations, opts...)
 }
 
 // UpdateMany update batch records
 func (model *Model) UpdateMany(filter interface{}, updates interface{}) (*mongo.UpdateResult, error) {
 	model.wrapUpdatedAt(updates)
-	return model.collection.UpdateMany(context.Background(), filter, updates)
+	return model.collection.UpdateMany(context.TODO(), filter, bson.M{"$set": updates})
 }
 
 // DeleteMany delete batch records
 func (model *Model) DeleteMany(filter interface{}) (*mongo.DeleteResult, error) {
-	return model.collection.DeleteMany(context.Background(), filter)
+	return model.collection.DeleteMany(context.TODO(), filter)
 }
 
 // SoftDeleteOne soft delete single record
 func (model *Model) SoftDeleteOne(filter interface{}) (*mongo.UpdateResult, error) {
-	return model.collection.UpdateOne(context.Background(), filter, bson.M{
-		model.modelTime.deletedAtField.BsonName: time.Now(),
+	return model.collection.UpdateOne(context.TODO(), filter, bson.M{
+		"$set": bson.M{
+			model.modelTime.deletedAtField.BsonName: time.Now(),
+		},
 	})
 }
 
 // SoftDeleteMany soft delete batch record
 func (model *Model) SoftDeleteMany(filter interface{}) (*mongo.UpdateResult, error) {
-	return model.collection.UpdateMany(context.Background(), filter, bson.M{
-		model.modelTime.deletedAtField.BsonName: time.Now(),
+	return model.collection.UpdateMany(context.TODO(), filter, bson.M{
+		"$set": bson.M{
+			model.modelTime.deletedAtField.BsonName: time.Now(),
+		},
 	})
-}
-
-func (model *Model) wrapCreatedAt(v interface{}) {
-	if model.modelTime.createdAtField != nil {
-		if reflect.ValueOf(v).Elem().FieldByName(model.modelTime.createdAtField.StructFieldName).CanSet() {
-			now := time.Now()
-			reflect.ValueOf(v).Elem().FieldByName(model.modelTime.createdAtField.StructFieldName).Set(reflect.ValueOf(now))
-		}
-	}
-}
-
-func (model *Model) wrapUpdatedAt(v interface{}) {
-	if model.modelTime.updatedAtField != nil {
-		if reflect.ValueOf(v).Elem().FieldByName(model.modelTime.updatedAtField.StructFieldName).CanSet() {
-			now := time.Now()
-			reflect.ValueOf(v).Elem().FieldByName(model.modelTime.updatedAtField.StructFieldName).Set(reflect.ValueOf(now))
-		}
-	}
-}
-
-func (model *Model) wrapDeletedAt(v interface{}) {
-	if model.modelTime.deletedAtField != nil {
-		if reflect.ValueOf(v).Elem().FieldByName(model.modelTime.deletedAtField.StructFieldName).CanSet() {
-			now := time.Now()
-			reflect.ValueOf(v).Elem().FieldByName(model.modelTime.deletedAtField.StructFieldName).Set(reflect.ValueOf(now))
-		}
-	}
 }
