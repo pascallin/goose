@@ -56,11 +56,11 @@ func main() {
 		Title:  "test post",
 	})
 	user.Name = "Pascal Lin"
-	err = userModel.Save()
+	_, err = userModel.Save()
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = postModel.Save()
+	_, err = postModel.Save()
 	if err != nil {
 		log.Fatal(err)
 	}
