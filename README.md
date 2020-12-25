@@ -1,6 +1,6 @@
 # goose
 
-A golang struct tags(schema) style mongo package hyper interface base on `mongo-driver`, inspired by Node.JS package `mongoose`
+A golang struct tags(schema) style mongo package hyper interface base on `mongo-driver`, inspired by Node.JS package [mongoose](https://github.com/Automattic/mongoose)
 
 ## Examples
 
@@ -94,13 +94,13 @@ Using `goose`, you can using tags to specific some data relationship and normal 
 
 |TagName | Usage | Description|
 |--- | --- | ---|
-| primary | `goose="primary"` | define a primary key for you collection model |
+| primary | `goose="primary"` | define a primary key for you collection model, default will set model primary key `_id` |
 | index | `goose="index"` | add field indexes to collection |
 | default |  `goose:"default='test'"` or `goose:"default=1"` or `goose:"default=1.1"` or `goose:"default=false"` | set default value for model field, `string` should be quote by `'` and not including `,`; int and float will convert to 64 bit, you should not add `bson:omitempty` if `default=0` |
-| populate | `goose="populate=User"` or `goose="populate=User" ref="Users" foreignKey="userId"` | populate data from other collection, `ref` and `foreignKey` is optional |
-| createdAt | `goose:"createdAt"` | set a created time
-| updatedAt | `goose:"createdAt"` | set a updated time
-| deletedAt | `goose:"createdAt"` | set a soft delete time and as soft delete signal
+| populate | `goose:"populate=Users"` or `goose:"populate=User" ref="Users" foreignKey="_id"` | populate data from other collection, if not setting `ref` and `foreignKey`, populate should be `populate=[COLLECTION_NAME]` and default foreignKey is `_id`  |
+| createdAt | `goose:"createdAt"` | set field as created time
+| updatedAt | `goose:"createdAt"` | set field as updated time
+| deletedAt | `goose:"createdAt"` |  set field as soft delete time
 | - | `goose:"-"` | do nothing
 
 A whole example:
@@ -110,8 +110,12 @@ type Post struct {
   ID          primitive.ObjectID `goose:"primary" bson:"_id,omitempty"`
   UserID      primitive.ObjectID `goose:"populate=User" bson:"userId,omitempty" ref:"TestUsers" forignKey:"_id"`
   Title       string             `goose:"-" bson:"title,omitempty"`
+  Description string             `goose:"default='No description.'"  bson:"description,omitempty"`
   CreatedTime time.Time          `goose:"index,createdAt" bson:"createdTime,omitempty"`
   UpdatedTime time.Time          `goose:"updatedAt" bson:"updatedTime,omitempty"`
+  ViewCount   int64              `goose:"default=0" bson:"viewCount"`
+  Rate        float64            `goose:"default=0" bson:"rate"`
+  IsPublished bool               `goose:"default=false" bson:"isPublished"`
 }
 ```
 
