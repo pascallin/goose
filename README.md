@@ -1,3 +1,6 @@
+[![Go Report Card](https://goreportcard.com/badge/github.com/pascallin/goose)](https://goreportcard.com/report/github.com/pascallin/goose)
+[![Go Reference](https://pkg.go.dev/badge/github.com/pascallin/goose.svg)](https://pkg.go.dev/github.com/pascallin/goose)
+
 # goose
 
 A golang struct tags(schema) style mongo package hyper interface base on `mongo-driver`, inspired by Node.JS package [mongoose](https://github.com/Automattic/mongoose)
