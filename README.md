@@ -1,4 +1,4 @@
-[![Go Report Card](https://goreportcard.com/badge/gojp/github.com/pascallin/goose)](https://goreportcard.com/report/github.com/pascallin/goose)
+[![Go Report Card](https://goreportcard.com/badge/github.com/pascallin/goose)](https://goreportcard.com/report/github.com/pascallin/goose)
 
 # goose
 
