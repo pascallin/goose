@@ -1,4 +1,4 @@
-package test
+package goose
 
 import (
 	"testing"
@@ -7,8 +7,6 @@ import (
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-
-	"github.com/pascallin/goose"
 )
 
 type User struct {
@@ -76,7 +74,7 @@ func TestPopulate(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	db, err := goose.NewMongoDatabase(&goose.DatabaseOptions{
+	db, err := NewMongoDatabase(&DatabaseOptions{
 		UsingEnv: true,
 	})
 	if err != nil {
@@ -90,8 +88,8 @@ func TestPopulate(t *testing.T) {
 		Name:  "John Doe",
 		Email: "john@example",
 	}
-	userModel := goose.NewModel("TestUsers", &user)
-	postModel := goose.NewModel("TestPosts", &Post{
+	userModel := NewModel("TestUsers", &user)
+	postModel := NewModel("TestPosts", &Post{
 		UserID: userID,
 		Title:  "test post",
 	})
@@ -105,7 +103,7 @@ func TestPopulate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	postModel = goose.NewModel("TestPosts", &Post{})
+	postModel = NewModel("TestPosts", &Post{})
 	result, err := postModel.Populate("User").Find(bson.M{})
 	if err != nil {
 		t.Fatal(err)

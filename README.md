@@ -149,3 +149,9 @@ godoc -http=:6060
 ```shell script
 go test -v ./test
 ```
+
+## Todo list
+
+- remove env (seems stupid idea)
+- context handling
+- test coverage

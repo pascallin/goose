@@ -13,7 +13,7 @@ import (
 )
 
 type User struct {
-	ID          primitive.ObjectID `goose:"primary" bson:"_id,omitempty""`
+	ID          primitive.ObjectID `goose:"primary" bson:"_id,omitempty"`
 	Name        string             `goose:"-" bson:"name,omitempty"`
 	Email       string             `goose:"-" bson:"email,omitempty"`
 	CreatedTime time.Time          `goose:"createdAt" bson:"createdTime,omitempty"`

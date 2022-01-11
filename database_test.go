@@ -1,12 +1,10 @@
-package test
+package goose
 
 import (
 	"fmt"
 	"testing"
 
 	"github.com/joho/godotenv"
-
-	"github.com/pascallin/goose"
 )
 
 func TestConnectUsingEnv(t *testing.T) {
@@ -14,7 +12,7 @@ func TestConnectUsingEnv(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	db, err := goose.NewMongoDatabase(&goose.DatabaseOptions{
+	db, err := NewMongoDatabase(&DatabaseOptions{
 		UsingEnv: true,
 	})
 	if err != nil {
@@ -29,7 +27,7 @@ func TestConnectUsingURL(t *testing.T) {
 	mongoConnStringTemplate := "mongodb://%s:%s@%s:%s"
 	connectionURI := fmt.Sprintf(mongoConnStringTemplate, "root", "example", "localhost", "27017")
 
-	db, err := goose.NewMongoDatabase(&goose.DatabaseOptions{
+	db, err := NewMongoDatabase(&DatabaseOptions{
 		DatabaseName: "test",
 		URL:          connectionURI,
 	})
