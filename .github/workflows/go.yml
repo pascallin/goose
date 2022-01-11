@@ -10,8 +10,18 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo
+        ports:
+        - 27017:27017
     steps:
     - uses: actions/checkout@v2
+      env:
+        # use mongodb for the host here because we have specified a container for the job.
+        # If we were running the job on the VM this would be localhost
+        MONGODB_ENDPOINT: mongodb
+        MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
 
     - name: Set up Go
       uses: actions/setup-go@v2
