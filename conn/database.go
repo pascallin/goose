@@ -2,13 +2,9 @@ package goose
 
 import (
 	"context"
-	"errors"
-	"fmt"
-	"os"
 	"time"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/joho/godotenv"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -17,16 +13,9 @@ import (
 
 // Database is a base struct for goose mongo
 type Database struct {
-	DB      *mongo.Database
-	Client  *mongo.Client
-	Context context.Context
-}
-
-type databaseEnvSetting struct {
-	username string
-	password string
-	endpoint string
-	port     string
+	DataBase *mongo.Database
+	Client   *mongo.Client
+	Context  context.Context
 }
 
 // DatabaseOptions init database options
@@ -35,29 +24,14 @@ type DatabaseOptions struct {
 	URL            string        `validate:"required_without=UsingEnv"` // connection URL string
 	UsingEnv       bool          `validate:"required_without=URL"`      // using env
 	DatabaseName   string        `validate:"required_without=UsingEnv"` // databaseName
-	databaseEnvSetting
+	username       string
+	password       string
+	endpoint       string
+	port           string
 }
 
 // DB a mongo database instance after init
 var DB *mongo.Database
-
-func getMongoConnURLFromEnv(ops *DatabaseOptions) (string, error) {
-	username := os.Getenv("MONGODB_USERNAME")
-	password := os.Getenv("MONGODB_PASSWORD")
-	clusterEndpoint := os.Getenv("MONGODB_ENDPOINT")
-	port := os.Getenv("MONGODB_PORT")
-	if username == "" || password == "" || clusterEndpoint == "" || port == "" {
-		return "", errors.New("missing env")
-	}
-	log.WithFields(log.Fields{
-		"username":        username,
-		"password":        password,
-		"clusterEndpoint": clusterEndpoint,
-	})
-	mongoConnStringTemplate := "mongodb://%s:%s@%s:%s"
-	connectionURI := fmt.Sprintf(mongoConnStringTemplate, username, password, clusterEndpoint, port)
-	return connectionURI, nil
-}
 
 func validateOptions(ops *DatabaseOptions) error {
 	var validate = validator.New()
@@ -78,27 +52,13 @@ func NewMongoDatabase(ops *DatabaseOptions) (*Database, error) {
 	}
 	var connectionURL string
 	var databaseName string
-	if ops.UsingEnv {
-		err := godotenv.Load()
-		if err != nil {
-			return nil, err
-		}
-		log.Info("using env URL.")
-		connectionURL, err = getMongoConnURLFromEnv(ops)
-		if err != nil {
-			return nil, err
-		}
-		databaseName = os.Getenv("MONGODB_DATABASE")
-	} else {
-		log.Info("using options URL.")
-		connectionURL = ops.URL
-		databaseName = ops.DatabaseName
-	}
+	connectionURL = ops.URL
+	databaseName = ops.DatabaseName
 	ctx, cancel := context.WithTimeout(context.Background(), ops.ConnectTimeout*time.Second)
 	defer cancel()
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(connectionURL))
 	if err != nil {
-		log.WithField("URL", connectionURL).Error("could not parse connection URL.")
+		log.WithField("URL", connectionURL).Error(err)
 		return nil, err
 	}
 	ctxPING, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -108,9 +68,8 @@ func NewMongoDatabase(ops *DatabaseOptions) (*Database, error) {
 		return nil, err
 	}
 	db := client.Database(databaseName)
-	mongoClient := &Database{DB: db, Client: client, Context: ctx}
-	log.Info("mongodb has been connected")
-	DB = mongoClient.DB
+	mongoClient := &Database{DataBase: db, Client: client, Context: ctx}
+	DB = mongoClient.DataBase
 	return mongoClient, nil
 }
 

@@ -40,12 +40,12 @@ func (model *Model) Populate(collectionName string) *Model {
 	for _, relation := range model.refs {
 		lookupStage := bson.D{
 			{
-				"$lookup",
-				bson.D{
-					{"from", relation.from},
-					{"localField", relation.localField},
-					{"foreignField", relation.foreignField},
-					{"as", relation.as}},
+				Key: "$lookup",
+				Value: bson.D{
+					{Key: "from", Value: relation.from},
+					{Key: "localField", Value: relation.localField},
+					{Key: "foreignField", Value: relation.foreignField},
+					{Key: "as", Value: relation.as}},
 			},
 		}
 		model.findOpt.pipeline = append(model.findOpt.pipeline, lookupStage)

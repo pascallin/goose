@@ -1,17 +1,16 @@
-package test
+package goose
 
 import (
 	"testing"
 	"time"
 
 	"github.com/joho/godotenv"
-	"github.com/pascallin/goose"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type TestUser struct {
-	ID          primitive.ObjectID `goose:"primary" bson:"_id,omitempty""`
+	ID          primitive.ObjectID `goose:"primary" bson:"_id,omitempty"`
 	Name        string             `goose:"-" bson:"name,omitempty"`
 	Email       string             `goose:"-" bson:"email,omitempty"`
 	CreatedTime time.Time          `goose:"createdAt" bson:"createdTime,omitempty"`
@@ -44,7 +43,7 @@ func TestMain(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	db, err := goose.NewMongoDatabase(&goose.DatabaseOptions{
+	db, err := NewMongoDatabase(&DatabaseOptions{
 		UsingEnv: true,
 	})
 	if err != nil {
@@ -72,7 +71,7 @@ func TestMain(t *testing.T) {
 }
 
 func checkDefault(t *testing.T) {
-	postModel := goose.NewModel("TestPosts", &TestPost{})
+	postModel := NewModel("TestPosts", &TestPost{})
 
 	t.Log(postModel.CurValue)
 }
@@ -83,8 +82,8 @@ func save(t *testing.T) {
 		Name:  "John Doe",
 		Email: "john@example",
 	}
-	userModel := goose.NewModel("TestUsers", user)
-	postModel := goose.NewModel("TestPosts", &TestPost{
+	userModel := NewModel("TestUsers", user)
+	postModel := NewModel("TestPosts", &TestPost{
 		UserID: UserID,
 		Title:  "test post",
 	})
@@ -103,7 +102,7 @@ func save(t *testing.T) {
 }
 
 func batchWrite(t *testing.T) {
-	postModel := goose.NewModel("TestPosts", &TestPost{})
+	postModel := NewModel("TestPosts", &TestPost{})
 
 	data := []interface{}{
 		&TestPost{
@@ -157,7 +156,7 @@ func batchWrite(t *testing.T) {
 }
 
 func findAndCount(t *testing.T) {
-	postModel := goose.NewModel("TestPosts", &TestPost{})
+	postModel := NewModel("TestPosts", &TestPost{})
 
 	findResult, err := postModel.FindAndCount(bson.M{})
 	if err != nil {
@@ -168,7 +167,7 @@ func findAndCount(t *testing.T) {
 }
 
 func populate(t *testing.T) {
-	postModel := goose.NewModel("TestPosts", &TestPost{})
+	postModel := NewModel("TestPosts", &TestPost{})
 	result, err := postModel.Populate("User").Find(bson.M{})
 	if err != nil {
 		t.Fatal(err)
@@ -177,14 +176,14 @@ func populate(t *testing.T) {
 }
 
 func delete(t *testing.T) {
-	postModel := goose.NewModel("TestPosts", &TestPost{})
+	postModel := NewModel("TestPosts", &TestPost{})
 	postDeleted, err := postModel.DeleteOneByID(PostID)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log(postDeleted.DeletedCount)
 
-	userModel := goose.NewModel("TestUsers", &TestUser{})
+	userModel := NewModel("TestUsers", &TestUser{})
 	userDeleted, err := userModel.SoftDeleteOne(bson.M{"_id": UserID})
 	if err != nil {
 		t.Fatal(err)
